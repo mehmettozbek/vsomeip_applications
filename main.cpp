@@ -12,8 +12,15 @@
 
 /*
  * GLOBALS
+ 
  */
-
+const uint32_t MESSAGE_ID_FILTER = 0x3fc8002; // The specific message IID that we want to filter for.
+const size_t PAYLOAD_MIN_LENGTH = 20; // The minimum length of the payload that we expect in order to properly extract the CAN ID and CAN Data.
+const size_t CAN_ID_BYTE_START = 12; // The starting byte index within the payload.
+const size_t CAN_ID_LENGTH = 4; // The length (in bytes) of the CAN ID within the payload.
+const size_t CAN_DATA_BYTE_START = 16; // The starting byte index within the payload from which the CAN Data begins.
+const size_t CAN_DATA_LENGTH = 8; // The length (in bytes) of the CAN Data.
+const size_t HEX_WIDTH = 2; // The width used when printing hexadecimal numbers.
 // vsomeip application instance
 std::shared_ptr<vsomeip::application> app;
 
@@ -244,7 +251,33 @@ void my_state_handler(vsomeip_v3::state_type_e ste) {
 }
 
 void my_message_handler(const std::shared_ptr<vsomeip_v3::message>& message) {
-    std::cout << "HANDLER:  message_handler(" << *message << ")" << std::endl;
+    //std::cout << "HANDLER:  message_handler(" << *message << ")" << std::endl;
+
+    //Assuming the Payload format is fixed and the CAN ID + CAN Data are at know positions
+    auto payload = message->get_payload()->get.data();
+    std::cout << "********************************************************************" << std::endl;
+    if (message->get_message() == MESSAGE_ID_FILTER) { // Only method=SomeIpsingleFrameEvent
+        if (message->get_payload()->get_length() >= PAYLOAD_MIN_LENGTH) { // Ensure payload is long enough
+            // Extract CAN ID (bytes 12 to 145 in payload, but need to be reversed for endianness)
+            uint32_t can_id = (payload[15] << 24) | (payload[14] << 16) | (payload[13] << 8) | payload[12];
+
+            // Print CAN ID in the desired format
+            std::cout << "CAN ID => " << std::hex << std::uppercase << std::setw(8) << std::setfill('0') << can_id << std::endl;
+
+            // Print CAN Data (bytes 16 to 23 in payload)
+            std::cout << "CAN Data => ";
+            for (int i = 16; i < 24; i++) {
+                std::cout << std::hex << std::uppercase << std::setw(2) << std::setfill('0') << static_cast<int>(payload[i]);
+                if (i < 23)
+                    std::cout << " ";
+            }
+            std::cout << std::endl;
+        } else {
+            // Payload is not as expected, handle error or ignore
+            std::cout << "Unexpected payload length or format" << std::endl;
+        }
+    }
+    std::cout << "********************************************************************" << std::endl;
 }
 
 void my_availability_handler(vsomeip_v3::service_t service, vsomeip_v3::instance_t instance, bool available) {
