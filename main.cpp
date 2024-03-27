@@ -254,7 +254,7 @@ void my_state_handler(vsomeip_v3::state_type_e ste) {
 void my_message_handler(const std::shared_ptr<vsomeip_v3::message>& message) {
     //  std::cout << "HANDLER:  message_handler(" << *message << ")" << std::endl;
 
-    std::cout << "----id=" << message.get_message() << "----" << std::endl;
+    std::cout << "----id=" << message->get_message() << "----" << std::endl;
     /*std::cout << "----service=" << get_service_name(message.get_service()) << "----" << std::endl;
     std::cout << "----instance=" << message.get_instance() << "/" << hex(message.get_instance()) << "----" << std::endl;
     std::cout << "----method=" << get_method_name(message.get_service(), message.get_method()) << "----" << std::endl;
@@ -275,7 +275,7 @@ void my_message_handler(const std::shared_ptr<vsomeip_v3::message>& message) {
     std::cout << "----env=" << message.get_env() << "----" << std::endl;
     std::cout << "----sec_client=" << message.get_sec_client() << "----" << std::endl;*/
 
-    if (get_method_name(get_service_name(message.get_service()), message.get_method()) == MESSAGE_ID_FILTER)
+    if (get_method_name(message.get_service(), message.get_method())) == MESSAGE_ID_FILTER)
          std::cout << "HANDLER:  message_handler(" << *message << ")" << std::endl;
 }
 
