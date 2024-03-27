@@ -252,31 +252,34 @@ void my_state_handler(vsomeip_v3::state_type_e ste) {
 }
 
 void my_message_handler(const std::shared_ptr<vsomeip_v3::message>& message) {
-    //  std::cout << "HANDLER:  message_handler(" << *message << ")" << std::endl;
 
-    std::cout << "----id=" << message->get_message() << "----" << std::endl;
-    /*std::cout << "----service=" << get_service_name(message.get_service()) << "----" << std::endl;
-    std::cout << "----instance=" << message.get_instance() << "/" << hex(message.get_instance()) << "----" << std::endl;
-    std::cout << "----method=" << get_method_name(message.get_service(), message.get_method()) << "----" << std::endl;
-    std::cout << "----length=" << message.get_length() << "----" << std::endl;
-    std::cout << "----client=" << message.get_client() << "/" << hex(message.get_client()) << "----" << std::endl;
-    std::cout << "----session=" << message.get_session() << "/" << hex(message.get_session()) << "----" << std::endl;
-    std::cout << "----protocol_version=" << message.get_protocol_version() << "----" << std::endl;
-    std::cout << "----interface_version=" << message.get_interface_version() << "----" << std::endl;
-    std::cout << "----type=" << get_message_type(message.get_message_type()) << "----" << std::endl;
-    std::cout << "----return_code=" << get_return_code(message.get_return_code()) << "----" << std::endl;
-    std::cout << "----is_reliale=" << message.is_reliable() << "----" << std::endl;
-    std::cout << "----is_initial=" << message.is_initial() << "----" << std::endl;
-    std::cout << "----payload=" << *(message.get_payload()) << "----" << std::endl;
-    std::cout << "----check_result=" << message.get_check_result() << "/" << hex(message.get_check_result()) << "----" << std::endl;
-    std::cout << "----is_valid_crc=" << message.is_valid_crc() << "----" << std::endl;
-    std::cout << "----uid=" << message.get_uid() << "----" << std::endl;
-    std::cout << "----gid=" << message.get_gid() << "----" << std::endl;
-    std::cout << "----env=" << message.get_env() << "----" << std::endl;
-    std::cout << "----sec_client=" << message.get_sec_client() << "----" << std::endl;*/
+    if (message->get_message() == 66879490) {
+        //  std::cout << "HANDLER:  message_handler(" << *message << ")" << std::endl;
 
-    if (get_method_name(message.get_service(), message.get_method())) == MESSAGE_ID_FILTER)
-         std::cout << "HANDLER:  message_handler(" << *message << ")" << std::endl;
+        //std::cout << "----id=" << message->get_message() << "----" << std::endl;
+        std::cout << "----service=" << get_service_name(message->get_service()) << "----" << std::endl;
+        //std::cout << "----instance=" << message.get_instance() << "/" << hex(message.get_instance()) << "----" << std::endl;
+        std::cout << "----method=" << get_method_name(message->get_service(), message->get_method()) << "----" << std::endl;
+        /*std::cout << "----length=" << message.get_length() << "----" << std::endl;
+        std::cout << "----client=" << message.get_client() << "/" << hex(message.get_client()) << "----" << std::endl;
+        std::cout << "----session=" << message.get_session() << "/" << hex(message.get_session()) << "----" << std::endl;
+        std::cout << "----protocol_version=" << message.get_protocol_version() << "----" << std::endl;
+        std::cout << "----interface_version=" << message.get_interface_version() << "----" << std::endl;
+        std::cout << "----type=" << get_message_type(message.get_message_type()) << "----" << std::endl;
+        std::cout << "----return_code=" << get_return_code(message.get_return_code()) << "----" << std::endl;
+        std::cout << "----is_reliale=" << message.is_reliable() << "----" << std::endl;
+        std::cout << "----is_initial=" << message.is_initial() << "----" << std::endl;
+        std::cout << "----payload=" << *(message.get_payload()) << "----" << std::endl;
+        std::cout << "----check_result=" << message.get_check_result() << "/" << hex(message.get_check_result()) << "----" << std::endl;
+        std::cout << "----is_valid_crc=" << message.is_valid_crc() << "----" << std::endl;
+        std::cout << "----uid=" << message.get_uid() << "----" << std::endl;
+        std::cout << "----gid=" << message.get_gid() << "----" << std::endl;
+        std::cout << "----env=" << message.get_env() << "----" << std::endl;
+        std::cout << "----sec_client=" << message.get_sec_client() << "----" << std::endl;*/
+
+        /*if (get_method_name(message.get_service(), message.get_method())) == MESSAGE_ID_FILTER)
+            std::cout << "HANDLER:  message_handler(" << *message << ")" << std::endl;*/
+    }
 }
 
 void my_availability_handler(vsomeip_v3::service_t service, vsomeip_v3::instance_t instance, bool available) {
