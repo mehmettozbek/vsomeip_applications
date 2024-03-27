@@ -252,28 +252,9 @@ void my_state_handler(vsomeip_v3::state_type_e ste) {
 }
 
 void my_message_handler(const std::shared_ptr<vsomeip_v3::message>& message) {
-    if (message->get_message() == MESSAGE_ID_FILTER) {
-        auto payload = message->get_payload()->get_data();
-        if (message->get_payload()->get_length() >= PAYLOAD_MIN_LENGTH) {
-            uint32_t can_id = (payload[CAN_ID_BYTE_START + 3] << 24) | 
-                              (payload[CAN_ID_BYTE_START + 2] << 16) | 
-                              (payload[CAN_ID_BYTE_START + 1] << 8) | 
-                              payload[CAN_ID_BYTE_START];
-            std::cout << "CAN ID => " << std::hex << std::uppercase << std::setw(8) << std::setfill('0') << can_id << std::endl;
-            
-            std::cout << "CAN Data => ";
-            for (int i = 0; i < CAN_DATA_LENGTH; i++) {
-                std::cout << std::hex << std::uppercase << std::setw(HEX_WIDTH) << std::setfill('0') << static_cast<int>(payload[CAN_DATA_BYTE_START + i]);
-                if (i < CAN_DATA_LENGTH - 1) std::cout << " ";
-            }
-            std::cout << std::endl;
-
-            // Paketler arasında bekleme
-            std::this_thread::sleep_for(std::chrono::milliseconds(100)); // 100 ms bekler
-        } else {
-            std::cout << "Unexpected payload length or format" << std::endl;
-        }
-    }
+    //  std::cout << "HANDLER:  message_handler(" << *message << ")" << std::endl;
+    if (message->get_message() == MESSAGE_ID_FILTER)
+         std::cout << "HANDLER:  message_handler(" << *message << ")" << std::endl;
 }
 
 void my_availability_handler(vsomeip_v3::service_t service, vsomeip_v3::instance_t instance, bool available) {
