@@ -252,8 +252,30 @@ void my_state_handler(vsomeip_v3::state_type_e ste) {
 }
 
 void my_message_handler(const std::shared_ptr<vsomeip_v3::message>& message) {
-    if (message->get_message() == 66879490)
-        std::cout << "HANDLER:  message_handler(" << *message << ")" << std::endl;
+    if (message->get_message() == 66879490) {
+        auto payload = message->get_payload()->get_data();
+
+        // Payload yeterince uzunsa
+        if (message->get_payload()->get_length() >= 20) {
+            // CAN ID'nin doğru sırayla çıkarılması ve yazdırılması
+            std::cout << "CAN ID = ";
+            std::cout << std::hex << std::uppercase;
+            // CAN ID, payload'un 12. byte'ından itibaren 4 byte olarak yer alıyor
+            for (int i = 11; i >= 8; --i) {
+                std::cout << std::setw(2) << std::setfill('0') << static_cast<int>(payload[i]);
+                if (i > 8) std::cout << " "; // Son byte haricinde boşluk bırak
+            }
+            std::cout << std::endl;
+
+            // CAN Data'nın yazdırılması
+            std::cout << "CAN Data = ";
+            for (int i = 12; i < 20; ++i) { // CAN Data 12. byte'dan başlıyor ve 8 byte uzunluğunda
+                std::cout << std::setw(2) << std::setfill('0') << static_cast<int>(payload[i]);
+                if (i < 19) std::cout << " ";
+            }
+            std::cout << std::endl;
+        }
+    }
 }
 
 void my_availability_handler(vsomeip_v3::service_t service, vsomeip_v3::instance_t instance, bool available) {
