@@ -254,8 +254,8 @@ void my_message_handler(const std::shared_ptr<vsomeip_v3::message>& message) {
     //std::cout << "HANDLER:  message_handler(" << *message << ")" << std::endl;
 
     //Assuming the Payload format is fixed and the CAN ID + CAN Data are at know positions
-    auto payload = message->get_payload()->get.data();
-    std::cout << "********************************************************************" << std::endl;
+    auto payload = message->get_payload()->get_data();
+    //std::cout << "********************************************************************" << std::endl;
     if (message->get_message() == MESSAGE_ID_FILTER) { // Only method=SomeIpsingleFrameEvent
         if (message->get_payload()->get_length() >= PAYLOAD_MIN_LENGTH) { // Ensure payload is long enough
             // Extract CAN ID (bytes 12 to 145 in payload, but need to be reversed for endianness)
@@ -271,13 +271,15 @@ void my_message_handler(const std::shared_ptr<vsomeip_v3::message>& message) {
                 if (i < 23)
                     std::cout << " ";
             }
+	    // Wait 100 ms within every package
+            std::this_thread::sleep_for(std::chrono::milliseconds(100));
             std::cout << std::endl;
         } else {
             // Payload is not as expected, handle error or ignore
             std::cout << "Unexpected payload length or format" << std::endl;
         }
     }
-    std::cout << "********************************************************************" << std::endl;
+    //std::cout << "********************************************************************" << std::endl;
 }
 
 void my_availability_handler(vsomeip_v3::service_t service, vsomeip_v3::instance_t instance, bool available) {
