@@ -18,12 +18,19 @@ find_library(VSOMEIP3_CFG_LIBRARY vsomeip3-cfg)
 find_library(VSOMEIP3_SD_LIBRARY vsomeip3-sd)
 find_library(VSOMEIP3_E2E_LIBRARY vsomeip3-e2e)
 
+# Find libcurl
+find_package(CURL REQUIRED)
+
+# Include directories for libcurl
+include_directories(${CURL_INCLUDE_DIRS})
+
 # Link libraries
 target_link_libraries(vsomeipClient
     ${VSOMEIP3_LIBRARY}
     ${VSOMEIP3_CFG_LIBRARY}
     ${VSOMEIP3_SD_LIBRARY}
     ${VSOMEIP3_E2E_LIBRARY}
+    ${CURL_LIBRARIES}
 )
 
 install(TARGETS vsomeipClient DESTINATION bin)
