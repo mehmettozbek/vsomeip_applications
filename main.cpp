@@ -1,3 +1,4 @@
+#include <curl/curl.h>
 #include <condition_variable>
 #include <fstream>
 #include <iomanip>
@@ -200,7 +201,7 @@ std::ostream& operator<<(std::ostream& stream, const vsomeip_v3::message& messag
            << "interface_version=" << message.get_interface_version() << ", "
            << "type=" << get_message_type(message.get_message_type()) << ", "
            << "return_code=" << get_return_code(message.get_return_code()) << ", "
-           << "is_reliale=" << message.is_reliable() << ", "
+           << "is_reliable=" << message.is_reliable() << ", "
            << "is_initial=" << message.is_initial() << ", "
            << "payload=" << *(message.get_payload()) << ", "
            << "check_result=" << message.get_check_result() << "/" << hex(message.get_check_result()) << ", "
@@ -251,29 +252,74 @@ void my_state_handler(vsomeip_v3::state_type_e ste) {
     std::cout << "HANDLER:  state_handler(" << get_state_type(ste) << ")" << std::endl;
 }
 
+bool send_can_data(const std::string& can_id, const std::string& can_data) {
+    CURL* curl;
+    CURLcode res;
+
+    curl_global_init(CURL_GLOBAL_DEFAULT);
+    curl = curl_easy_init();
+    if (curl) {
+        std::string url = "https://sandbox.vehicles.fmpopt.scania.com:8080";
+        nlohmann::json json_data;
+        json_data["CAN_ID"] = can_id;
+        json_data["CAN_Data"] = can_data;
+
+        std::string json_string = json_data.dump();
+
+        struct curl_slist* headers = NULL;
+        headers = curl_slist_append(headers, "Content-Type: application/json");
+
+        curl_easy_setopt(curl, CURLOPT_URL, url.c_str());
+        curl_easy_setopt(curl, CURLOPT_HTTPHEADER, headers);
+        curl_easy_setopt(curl, CURLOPT_POSTFIELDS, json_string.c_str());
+
+        res = curl_easy_perform(curl);
+
+        if (res != CURLE_OK) {
+            std::cerr << "curl_easy_perform() failed: " << curl_easy_strerror(res) << std::endl;
+            curl_easy_cleanup(curl);
+            curl_global_cleanup();
+            return false;
+        }
+
+        curl_easy_cleanup(curl);
+    }
+
+    curl_global_cleanup();
+    return true;
+}
+
 void my_message_handler(const std::shared_ptr<vsomeip_v3::message>& message) {
     if (message->get_message() == 66879490) {
         auto payload = message->get_payload()->get_data();
 
-        // Payload yeterince uzunsa
+        // Ensure payload is sufficiently long
         if (message->get_payload()->get_length() >= 20) {
-            // CAN ID'nin doğru sırayla çıkarılması ve yazdırılması
-            std::cout << "CAN ID = ";
-            std::cout << std::hex << std::uppercase;
-            // CAN ID, payload'un 12. byte'ından itibaren 4 byte olarak yer alıyor
+            // Extract and print CAN ID
+            std::stringstream can_id_stream;
+            can_id_stream << std::hex << std::uppercase;
             for (int i = 11; i >= 8; --i) {
-                std::cout << std::setw(2) << std::setfill('0') << static_cast<int>(payload[i]);
-                if (i > 8) std::cout << " "; // Son byte haricinde boşluk bırak
+                can_id_stream << std::setw(2) << std::setfill('0') << static_cast<int>(payload[i]);
+                if (i > 8) can_id_stream << " ";
             }
-            std::cout << std::endl;
+            std::string can_id = can_id_stream.str();
+            std::cout << "CAN ID = " << can_id << std::endl;
 
-            // CAN Data'nın yazdırılması
-            std::cout << "CAN Data = ";
-            for (int i = 12; i < 20; ++i) { // CAN Data 12. byte'dan başlıyor ve 8 byte uzunluğunda
-                std::cout << std::setw(2) << std::setfill('0') << static_cast<int>(payload[i]);
-                if (i < 19) std::cout << " ";
+            // Extract and print CAN Data
+            std::stringstream can_data_stream;
+            for (int i = 12; i < 20; ++i) {
+                can_data_stream << std::setw(2) << std::setfill('0') << static_cast<int>(payload[i]);
+                if (i < 19) can_data_stream << " ";
             }
-            std::cout << std::endl;
+            std::string can_data = can_data_stream.str();
+            std::cout << "CAN Data = " << can_data << std::endl;
+
+            // Send CAN ID and CAN Data to the offboard endpoint
+            if (send_can_data(can_id, can_data)) {
+                std::cout << "CAN data sent successfully!" << std::endl;
+            } else {
+                std::cerr << "Failed to send CAN data." << std::endl;
+            }
         }
     }
 }
