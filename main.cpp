@@ -253,43 +253,31 @@ void my_state_handler(vsomeip_v3::state_type_e ste) {
 }
 
 bool send_can_data(const std::string& vehicle_id, const std::string& can_id, const std::string& can_data) {
-    CURL* curl;
-    CURLcode res;
-
-    curl_global_init(CURL_GLOBAL_DEFAULT);
-    curl = curl_easy_init();
-    if (curl) {
-        std::string url = "https://sandbox.vehicles.fmpopt.scania.com:8080/linux/vehicle/" + vehicle_id + "/can";
-        nlohmann::json json_data;
-        json_data["canID"] = can_id;
-        json_data["data"] = can_data;
-
-        std::string json_string = json_data.dump();
-
-        struct curl_slist* headers = NULL;
-        headers = curl_slist_append(headers, "Content-Type: application/json");
-
-        curl_easy_setopt(curl, CURLOPT_URL, url.c_str());
-        curl_easy_setopt(curl, CURLOPT_HTTPHEADER, headers);
-        curl_easy_setopt(curl, CURLOPT_POSTFIELDS, json_string.c_str());
-        
-        // Disable peer verification to resolve SSL error
-        curl_easy_setopt(curl, CURLOPT_SSL_VERIFYPEER, 0L);
-        curl_easy_setopt(curl, CURLOPT_SSL_VERIFYHOST, 0L);        
-
-        res = curl_easy_perform(curl);
-
-        if (res != CURLE_OK) {
-            std::cerr << "curl_easy_perform() failed: " << curl_easy_strerror(res) << std::endl;
-            curl_easy_cleanup(curl);
-            curl_global_cleanup();
-            return false;
-        }
-
-        curl_easy_cleanup(curl);
+    static CURL* curl = curl_easy_init(); // Consider making this thread-local if accessing from multiple threads
+    if (!curl) {
+        std::cerr << "Failed to initialize CURL." << std::endl;
+        return false;
     }
 
-    curl_global_cleanup();
+    std::string url = "https://sandbox.vehicles.fmpopt.scania.com:8080/linux/vehicle/" + vehicle_id + "/can";
+    nlohmann::json json_data = {{"canID", can_id}, {"data", can_data}};
+    std::string json_string = json_data.dump();
+    struct curl_slist* headers = curl_slist_append(nullptr, "Content-Type: application/json");
+
+    curl_easy_setopt(curl, CURLOPT_URL, url.c_str());
+    curl_easy_setopt(curl, CURLOPT_HTTPHEADER, headers);
+    curl_easy_setopt(curl, CURLOPT_POSTFIELDS, json_string.c_str());
+    curl_easy_setopt(curl, CURLOPT_SSL_VERIFYPEER, 0L);
+    curl_easy_setopt(curl, CURLOPT_SSL_VERIFYHOST, 0L);
+    curl_easy_setopt(curl, CURLOPT_VERBOSE, 1L);  // Enable verbose for debugging
+
+    CURLcode res = curl_easy_perform(curl);
+    curl_slist_free_all(headers);  // Free headers
+
+    if (res != CURLE_OK) {
+        std::cerr << "curl_easy_perform() failed: " << curl_easy_strerror(res) << std::endl;
+        return false;
+    }
     return true;
 }
 
@@ -302,7 +290,7 @@ void my_message_handler(const std::shared_ptr<vsomeip_v3::message>& message) {
         // Ensure payload is sufficiently long
         if (message->get_payload()->get_length() >= 20) {
             // Extract and print CAN ID
-            std::stringstream can_id_stream;
+            std::stringstream can_id_stream, can_data_stream;;
             can_id_stream << std::hex << std::uppercase;
             for (int i = 11; i >= 8; --i) {
                 can_id_stream << std::setw(2) << std::setfill('0') << static_cast<int>(payload[i]);
@@ -312,7 +300,6 @@ void my_message_handler(const std::shared_ptr<vsomeip_v3::message>& message) {
             std::cout << "CAN ID = " << can_id << std::endl;
 
             // Extract and print CAN Data
-            std::stringstream can_data_stream;
             for (int i = 12; i < 20; ++i) {
                 can_data_stream << std::setw(2) << std::setfill('0') << static_cast<int>(payload[i]);
                 if (i < 19) can_data_stream << " ";
@@ -428,6 +415,7 @@ void my_async_subscription_handler_sec(vsomeip_v3::client_t client, const vsomei
 }
 
 int main() {
+	curl_global_init(CURL_GLOBAL_DEFAULT); // Initialize CURL globally
 	std::cout << "Creating application..." << std::endl;
 	app = vsomeip::runtime::get()->create_application("Client1");
 
@@ -464,4 +452,6 @@ int main() {
 	std::cout << "Starting application..." << std::endl;
 	app->start();
 	std::cout << "Exitting application." << std::endl;
+	curl_global_cleanup(); // Clean up CURL globally
+	return 0;
 }
