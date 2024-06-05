@@ -252,17 +252,17 @@ void my_state_handler(vsomeip_v3::state_type_e ste) {
     std::cout << "HANDLER:  state_handler(" << get_state_type(ste) << ")" << std::endl;
 }
 
-bool send_can_data(const std::string& can_id, const std::string& can_data) {
+bool send_can_data(const std::string& vehicle_id, const std::string& can_id, const std::string& can_data) {
     CURL* curl;
     CURLcode res;
 
     curl_global_init(CURL_GLOBAL_DEFAULT);
     curl = curl_easy_init();
     if (curl) {
-        std::string url = "https://sandbox.vehicles.fmpopt.scania.com:8080";
+        std::string url = "https://sandbox.vehicles.fmpopt.scania.com:8080/linux/vehicle/" + vehicle_id + "/can";
         nlohmann::json json_data;
-        json_data["CAN_ID"] = can_id;
-        json_data["CAN_Data"] = can_data;
+        json_data["canID"] = can_id;
+        json_data["data"] = can_data;
 
         std::string json_string = json_data.dump();
 
@@ -290,6 +290,8 @@ bool send_can_data(const std::string& can_id, const std::string& can_data) {
 }
 
 void my_message_handler(const std::shared_ptr<vsomeip_v3::message>& message) {
+    const std::string vehicle_id = "vehicle1111"; // modify as necessary
+
     if (message->get_message() == 66879490) {
         auto payload = message->get_payload()->get_data();
 
@@ -315,7 +317,7 @@ void my_message_handler(const std::shared_ptr<vsomeip_v3::message>& message) {
             std::cout << "CAN Data = " << can_data << std::endl;
 
             // Send CAN ID and CAN Data to the offboard endpoint
-            if (send_can_data(can_id, can_data)) {
+            if (send_can_data(vehicle_id, can_id, can_data)) {
                 std::cout << "CAN data sent successfully!" << std::endl;
             } else {
                 std::cerr << "Failed to send CAN data." << std::endl;
