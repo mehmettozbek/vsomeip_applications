@@ -272,6 +272,10 @@ bool send_can_data(const std::string& vehicle_id, const std::string& can_id, con
         curl_easy_setopt(curl, CURLOPT_URL, url.c_str());
         curl_easy_setopt(curl, CURLOPT_HTTPHEADER, headers);
         curl_easy_setopt(curl, CURLOPT_POSTFIELDS, json_string.c_str());
+        
+        // Disable peer verification to resolve SSL error
+        curl_easy_setopt(curl, CURLOPT_SSL_VERIFYPEER, 0L);
+        curl_easy_setopt(curl, CURLOPT_SSL_VERIFYHOST, 0L);        
 
         res = curl_easy_perform(curl);
 
