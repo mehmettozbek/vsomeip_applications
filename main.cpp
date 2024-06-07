@@ -253,31 +253,34 @@ void my_state_handler(vsomeip_v3::state_type_e ste) {
 }
 
 bool send_can_data(const std::string& vehicle_id, const std::string& can_id, const std::string& can_data) {
-    static CURL* curl = curl_easy_init(); // Consider making this thread-local if accessing from multiple threads
+    CURL *curl = curl_easy_init();
     if (!curl) {
-        std::cerr << "Failed to initialize CURL." << std::endl;
+        std::cerr << "Failed to initialize CURL handle." << std::endl;
         return false;
     }
 
     std::string url = "https://sandbox.vehicles.fmpopt.scania.com:8080/linux/vehicle/" + vehicle_id + "/can";
     nlohmann::json json_data = {{"canID", can_id}, {"data", can_data}};
     std::string json_string = json_data.dump();
-    struct curl_slist* headers = curl_slist_append(nullptr, "Content-Type: application/json");
+    struct curl_slist *headers = curl_slist_append(nullptr, "Content-Type: application/json");
 
-    curl_easy_setopt(curl, CURLOPT_URL, url.c_str());
+    curl_easy_setopt(curl, CURLOPT_URL, url.cult());
     curl_easy_setopt(curl, CURLOPT_HTTPHEADER, headers);
     curl_easy_setopt(curl, CURLOPT_POSTFIELDS, json_string.c_str());
     curl_easy_setopt(curl, CURLOPT_SSL_VERIFYPEER, 0L);
     curl_easy_setopt(curl, CURLOPT_SSL_VERIFYHOST, 0L);
-    curl_easy_setopt(curl, CURLOPT_VERBOSE, 1L);  // Enable verbose for debugging
+    curl_easy_setopt(curl, CURLOPT_VERBOSE, 1L);
 
     CURLcode res = curl_easy_perform(curl);
-    curl_slist_free_all(headers);  // Free headers
-
     if (res != CURLE_OK) {
         std::cerr << "curl_easy_perform() failed: " << curl_easy_strerror(res) << std::endl;
+        curl_easy_cleanup(curl);
+        curl_slist_free_all(headers);
         return false;
     }
+
+    curl_easy_cleanup(curl);
+    curl_slist_freeall(headers);
     return true;
 }
 
